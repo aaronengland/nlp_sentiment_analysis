@@ -1,6 +1,6 @@
 # NLP Sentiment Analysis: Employee Review Classification
 
-**Can we predict how an employee feels about their company just from the words they write?**
+**Can I predict how an employee feels about their company just from the words they write?**
 
 This project takes ~30,000 employee reviews and builds four different machine learning models to classify each review as **Negative**, **Neutral**, or **Positive** based on the text alone. It walks through the full data science pipeline — from raw data to model comparison — demonstrating four distinct algorithm families: logistic regression, random forests, gradient boosting, and neural networks.
 
@@ -8,13 +8,13 @@ This project takes ~30,000 employee reviews and builds four different machine le
 
 ## The Problem
 
-Employees leave written reviews about their companies. Each review comes with a star rating (1-5), but the interesting question is: **can we determine the sentiment from the text itself, without seeing the star rating?**
+Employees leave written reviews about their companies. Each review comes with a star rating (1-5), but the interesting question is: **can I determine the sentiment from the text itself, without seeing the star rating?**
 
 This matters because in real HR software (like performance reviews, engagement surveys, and exit interviews), there often *is no star rating* — just free-form text. A model that understands tone and sentiment can automatically surface insights from thousands of responses.
 
-### How We Define Sentiment
+### How I Define Sentiment
 
-We group the 1-5 star ratings into three classes:
+I group the 1-5 star ratings into three classes:
 
 | Sentiment | Star Ratings | What It Means |
 |-----------|-------------|---------------|
@@ -26,11 +26,11 @@ We group the 1-5 star ratings into three classes:
 
 ## The Dataset at a Glance
 
-We start with **30,281 cleaned reviews** sourced from Kaggle. Here's what the rating distribution looks like:
+I start with **30,281 cleaned reviews** sourced from Kaggle. Here's what the rating distribution looks like:
 
 ![Rating Distribution](01_eda/output/01_rating_distribution.png)
 
-Most reviewers gave 3-4 stars. When we collapse these into our three sentiment classes, the imbalance becomes clear:
+Most reviewers gave 3-4 stars. When I collapse these into three sentiment classes, the imbalance becomes clear:
 
 ![Sentiment Distribution](01_eda/output/02_sentiment_distribution.png)
 
@@ -75,14 +75,14 @@ Visualize the data to understand distributions, word patterns, and class imbalan
 
 ### Step 3: Text Preprocessing (Notebook 02)
 
-Raw text is messy. Before feeding it to models, we clean it:
+Raw text is messy. Before feeding it to models, I clean it:
 
 1. **Lowercase** everything
 2. **Remove punctuation** and special characters
 3. **Remove stopwords** ("the", "is", "at") that add noise
 4. **Lemmatize** words — reduce "running", "runs", "ran" all to "run"
 
-Then we split the data into three sets:
+Then I split the data into three sets:
 
 | Split | Size | Purpose |
 |-------|-----:|---------|
@@ -94,7 +94,7 @@ The splits are **stratified** — each set has the same ~14% / 31% / 55% class r
 
 ### Step 4: Model Training (Notebooks 03-06)
 
-We train four different models. The first three use **TF-IDF** (Term Frequency-Inverse Document Frequency) to convert text into numbers. Think of TF-IDF as a way to score how important each word is to a given review — common words like "work" get lower scores while distinctive words like "toxic" or "amazing" get higher scores.
+I train four different models. The first three use **TF-IDF** (Term Frequency-Inverse Document Frequency) to convert text into numbers. Think of TF-IDF as a way to score how important each word is to a given review — common words like "work" get lower scores while distinctive words like "toxic" or "amazing" get higher scores.
 
 The fourth model (LSTM) takes a completely different approach by processing the text as a *sequence* of words.
 
@@ -180,7 +180,7 @@ All four models are evaluated on the **same held-out test set** (6,057 reviews) 
 | XGBoost | 0.453 | 0.409 | 0.465 | **0.620** |
 | LSTM | 0.548 | 0.254 | 0.399 | 0.509 |
 
-**Why we use F1-Macro (not accuracy):** Accuracy can be misleading with imbalanced classes. A model that predicts "Positive" for every review would get 55% accuracy — which is what the LSTM is essentially doing. F1-Macro averages the F1 score across all three classes equally, so a model has to perform well on *every* class to score high.
+**Why I use F1-Macro (not accuracy):** Accuracy can be misleading with imbalanced classes. A model that predicts "Positive" for every review would get 55% accuracy — which is what the LSTM is essentially doing. F1-Macro averages the F1 score across all three classes equally, so a model has to perform well on *every* class to score high.
 
 By F1-Macro, **Random Forest wins** (0.414), followed closely by XGBoost (0.409) and Logistic Regression (0.407).
 
