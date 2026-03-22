@@ -38,8 +38,8 @@ Run notebooks sequentially: 00 → 01 → 02 → 03 → 04 → 05 → 06 → 07.
 
 ## Key Technical Details
 
-- **All models use Bayesian hyperparameter tuning via Optuna** (20 trials each, TPESampler) — except the LSTM which uses early stopping + ReduceLROnPlateau
-- **TF-IDF config**: 10,000 max features, unigrams + bigrams, sublinear TF
+- **All models use Bayesian hyperparameter tuning via Optuna** (10 trials each, TPESampler) — except the LSTM which uses early stopping + ReduceLROnPlateau
+- **TF-IDF config**: 3,000 max features, unigrams, sublinear TF
 - **LSTM**: Pure PyTorch (no TensorFlow/Keras) — Embedding → LSTM → Dense. Custom vocabulary building, manual training loop
 - **Evaluation**: Accuracy, F1-macro, F1-weighted, ROC AUC (macro), per-class precision/recall/F1, confusion matrices, ROC curves
 - **Comparison notebook** loads all 4 serialized models and evaluates on the same test set
