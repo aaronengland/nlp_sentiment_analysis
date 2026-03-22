@@ -65,7 +65,7 @@ Download Kaggle dataset, clean, create sentiment labels, upload to S3.
 4. Create sentiment_3class column (0=Negative, 1=Neutral, 2=Positive)
 5. Save cleaned CSV to S3
 
-**Output**: s3://npl-sentiment-analysis-demo/00_data_collection/employee_reviews_clean.csv
+**Output**: s3://nlp-sentiment-analysis-demo/00_data_collection/employee_reviews_clean.csv
 
 ---
 
