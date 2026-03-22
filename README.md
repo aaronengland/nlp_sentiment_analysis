@@ -263,8 +263,3 @@ pip install -r requirements.txt
 
 Requires AWS credentials configured for S3 access and a Kaggle account for dataset download.
 
----
-
-## Author
-
-**Aaron England** | [aaron-england.com](https://aaron-england.com)
