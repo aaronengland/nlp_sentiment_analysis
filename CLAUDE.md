@@ -10,7 +10,7 @@ Paylocity's job description lists four algorithm families: **regression, random 
 
 `npl-sentiment-analysis-demo`
 
-All data is read from and written to this bucket. Raw data goes in `00_data_collection/`, preprocessed splits in `02_preprocessing/`.
+All data is read from and written to this bucket as **parquet** files. Raw data goes in `00_data_collection/`, preprocessed splits in `02_preprocessing/`. No data is saved to local folders.
 
 ## Dataset
 
