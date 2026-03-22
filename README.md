@@ -2,7 +2,7 @@
 
 **Can I predict how an employee feels about their company just from the words they write?**
 
-This project takes ~30,000 employee reviews and builds four different machine learning models to classify each review as **Negative**, **Neutral**, or **Positive** based on the text alone. It walks through the full data science pipeline — from raw data to model comparison — demonstrating four distinct algorithm families: logistic regression, random forests, gradient boosting, and neural networks.
+This project takes ~30,000 employee reviews and builds five different machine learning models to classify each review as **Negative**, **Neutral**, or **Positive** based on the text alone. It walks through the full data science pipeline — from raw data to model comparison — demonstrating five distinct approaches: logistic regression, random forests, gradient boosting, a neural network, and a pretrained transformer.
 
 ---
 
@@ -62,7 +62,7 @@ Words like *"management"*, *"pay"*, and *"employees"* appear more heavily in neg
 
 ```
 Raw Reviews ──> Clean Text ──> Split Data ──> Train Models ──> Evaluate & Compare
-    (00)          (02)          (02)         (03-06)            (07)
+    (00)          (02)          (02)         (03-06b)           (07)
 ```
 
 ### Step 1: Data Collection (Notebook 00)
@@ -92,15 +92,15 @@ Then I split the data into three sets:
 
 The splits are **stratified** — each set has the same ~14% / 31% / 55% class ratio as the full dataset.
 
-### Step 4: Model Training (Notebooks 03-06)
+### Step 4: Model Training (Notebooks 03-06b)
 
-I train four different models. The first three use **TF-IDF** (Term Frequency-Inverse Document Frequency) to convert text into numbers. Think of TF-IDF as a way to score how important each word is to a given review — common words like "work" get lower scores while distinctive words like "toxic" or "amazing" get higher scores.
+I train four models from scratch and evaluate one pretrained model. The first three use **TF-IDF** (Term Frequency-Inverse Document Frequency) to convert text into numbers. Think of TF-IDF as a way to score how important each word is to a given review — common words like "work" get lower scores while distinctive words like "toxic" or "amazing" get higher scores.
 
-The fourth model (LSTM) takes a completely different approach by processing the text as a *sequence* of words.
+The fourth model (LSTM) processes text as a *sequence* of words. The fifth (DistilBERT) is a pretrained transformer that requires no training at all.
 
 ---
 
-## The Four Models
+## The Five Models
 
 ### Model 1: Logistic Regression
 
@@ -165,9 +165,25 @@ The LSTM's confusion matrix reveals a notable behavior — it predicts almost ev
 
 ---
 
+### Model 5: Pretrained DistilBERT (HuggingFace)
+
+**A pretrained transformer that requires no training.** Unlike the previous four models which I trained from scratch, this model (`lxyuan/distilbert-base-multilingual-cased-sentiments-student`) was already fine-tuned on millions of text samples for 3-class sentiment classification. I simply run it on the test set and evaluate its predictions — zero training required.
+
+- **Model**: DistilBERT (66M parameters, distilled from BERT)
+- **Training**: None — pretrained, used as-is
+- **Strength**: Leverages massive pretraining data, understands context and nuance that bag-of-words models miss
+
+![RoBERTa Confusion Matrix](06b_pretrained_transformer/output/01_confusion_matrix.png)
+
+![RoBERTa ROC Curves](06b_pretrained_transformer/output/02_roc_curves.png)
+
+The pretrained DistilBERT achieves 53.6% accuracy — second only to the LSTM. However, like the LSTM, it heavily favors the Positive class and nearly ignores Neutral (F1 of just 0.01 for Neutral). This is a **domain mismatch** problem: the model was trained on general-purpose text, not employee reviews where a 3-star "neutral" review might use words like "good" and "great" that the model associates with positive sentiment.
+
+---
+
 ## Head-to-Head Comparison
 
-All four models are evaluated on the **same held-out test set** (6,057 reviews) that was never used during training or tuning.
+All five models are evaluated on the **same held-out test set** (6,057 reviews) that was never used during training or tuning.
 
 ### Overall Metrics
 
@@ -179,10 +195,11 @@ All four models are evaluated on the **same held-out test set** (6,057 reviews) 
 | **Random Forest** | **0.481** | **0.414** | **0.482** | 0.611 |
 | XGBoost | 0.453 | 0.409 | 0.465 | **0.620** |
 | LSTM | 0.548 | 0.254 | 0.399 | 0.509 |
+| DistilBERT (pretrained) | 0.536 | 0.325 | 0.426 | 0.589 |
 
-**Why I use F1-Macro (not accuracy):** Accuracy can be misleading with imbalanced classes. A model that predicts "Positive" for every review would get 55% accuracy — which is what the LSTM is essentially doing. F1-Macro averages the F1 score across all three classes equally, so a model has to perform well on *every* class to score high.
+**Why I use F1-Macro (not accuracy):** Accuracy can be misleading with imbalanced classes. A model that predicts "Positive" for every review would get 55% accuracy — which is roughly what the LSTM and DistilBERT are doing. F1-Macro averages the F1 score across all three classes equally, so a model has to perform well on *every* class to score high.
 
-By F1-Macro, **Random Forest wins** (0.414), followed closely by XGBoost (0.409) and Logistic Regression (0.407).
+By F1-Macro, **Random Forest wins** (0.414), followed closely by XGBoost (0.409) and Logistic Regression (0.407). The pretrained DistilBERT (0.325) outperforms the LSTM (0.254) but falls short of the TF-IDF models.
 
 ### Confusion Matrices Side by Side
 
@@ -190,7 +207,7 @@ By F1-Macro, **Random Forest wins** (0.414), followed closely by XGBoost (0.409)
 
 Key observations:
 - **All TF-IDF models** spread predictions across all three classes, with the most confusion between Neutral and Positive (which makes sense — a 3-star and 4-star review can sound very similar)
-- **The LSTM** collapses nearly everything into Positive, showing it failed to learn the minority classes with the constrained architecture
+- **The LSTM and DistilBERT** both collapse nearly everything into Positive, showing they favor the majority class. The LSTM and DistilBERT agree on 86.7% of predictions — the highest pairwise agreement rate — because both default to predicting Positive
 
 ### Per-Class F1 Scores
 
@@ -202,25 +219,27 @@ The Neutral class is the hardest for every model — 3-star reviews contain mixe
 
 ![ROC Comparison](07_comparison/output/02_roc_comparison.png)
 
-The ROC curves show that all three TF-IDF models perform similarly, with XGBoost having a slight edge on Negative class detection (AUC=0.703). The LSTM's curves hover near the diagonal (random chance), confirming it didn't learn meaningful class boundaries.
+The ROC curves show that all three TF-IDF models perform similarly, with XGBoost having a slight edge on Negative class detection (AUC=0.703). The LSTM's curves hover near the diagonal (random chance). DistilBERT falls between the TF-IDF models and the LSTM.
 
 ### Model Agreement
 
-Only **28.7% of test reviews** received the same prediction from all four models. The highest pairwise agreement was between Random Forest and XGBoost (66.9%), which makes sense since both are tree-based methods working on the same TF-IDF features.
+Only **27.3% of test reviews** received the same prediction from all five models. The highest pairwise agreement was between the LSTM and DistilBERT (86.7%) — both defaulting to Positive. Among the TF-IDF models, Random Forest and XGBoost agreed most often (66.9%).
 
 ---
 
 ## Key Takeaways
 
-1. **The traditional ML models (Logistic Regression, Random Forest, XGBoost) all performed comparably.** This is common in NLP tasks where TF-IDF features carry most of the signal. Fancy algorithms can't compensate for feature limitations.
+1. **The traditional ML models (Logistic Regression, Random Forest, XGBoost) all performed comparably** and outperformed the deep learning approaches on F1-Macro. This is common in NLP tasks where TF-IDF features carry most of the signal and the dataset isn't large enough to benefit from deep learning.
 
-2. **The LSTM underperformed** in this proof-of-concept configuration. Deep learning for NLP typically needs either pre-trained embeddings (like GloVe or Word2Vec), a larger vocabulary, or a transformer architecture (like BERT) to outperform TF-IDF baselines. The small vocabulary and short sequence length used here were too constrained.
+2. **The pretrained DistilBERT didn't outperform TF-IDF models** despite having 66 million parameters and massive pretraining. This is a **domain mismatch** — the model was trained on general text, not employee reviews. Fine-tuning DistilBERT on this specific dataset would likely close the gap significantly.
 
-3. **The Neutral class is fundamentally hard.** Three-star reviews use mixed language that overlaps with both positive and negative vocabulary. This is a known challenge in sentiment analysis — the boundary between "meh" and "good" is genuinely fuzzy in natural language.
+3. **The LSTM underperformed** in this proof-of-concept configuration. Deep learning for NLP typically needs either pre-trained embeddings (like GloVe or Word2Vec), a larger vocabulary, or a transformer architecture to outperform TF-IDF baselines.
 
-4. **Class imbalance matters.** With only 13.7% Negative reviews, all models struggle with that class. Production systems would benefit from techniques like class-weighted loss functions, oversampling (SMOTE), or framing the problem as binary (Positive vs. Not Positive).
+4. **The Neutral class is fundamentally hard.** Three-star reviews use mixed language that overlaps with both positive and negative vocabulary. This is a known challenge in sentiment analysis — the boundary between "meh" and "good" is genuinely fuzzy in natural language.
 
-5. **Simple models are often good enough.** Logistic Regression, the simplest model here, was within 1-2% of the best performer on most metrics. For a production system where interpretability and speed matter, it's a strong choice.
+5. **Class imbalance matters.** With only 13.7% Negative reviews, all models struggle with that class. Production systems would benefit from techniques like class-weighted loss functions, oversampling (SMOTE), or framing the problem as binary (Positive vs. Not Positive).
+
+6. **Simple models are often good enough.** Logistic Regression, the simplest model here, was within 1-2% of the best performer on most metrics. For a production system where interpretability and speed matter, it's a strong choice.
 
 ---
 
@@ -228,14 +247,15 @@ Only **28.7% of test reviews** received the same prediction from all four models
 
 ```
 nlp_sentiment_analysis/
-├── 00_data_collection/notebook.ipynb     # Download, clean, upload to S3
-├── 01_eda/notebook.ipynb                 # Exploratory data analysis
-├── 02_preprocessing/notebook.ipynb       # Text cleaning, train/val/test split
-├── 03_tfidf_logreg/notebook.ipynb        # TF-IDF + Logistic Regression
-├── 04_tfidf_random_forest/notebook.ipynb # TF-IDF + Random Forest
-├── 05_tfidf_xgboost/notebook.ipynb       # TF-IDF + XGBoost
-├── 06_neural_network/notebook.ipynb      # PyTorch LSTM
-├── 07_comparison/notebook.ipynb          # Head-to-head model comparison
+├── 00_data_collection/notebook.ipynb        # Download, clean, upload to S3
+├── 01_eda/notebook.ipynb                    # Exploratory data analysis
+├── 02_preprocessing/notebook.ipynb          # Text cleaning, train/val/test split
+├── 03_tfidf_logreg/notebook.ipynb           # TF-IDF + Logistic Regression
+├── 04_tfidf_random_forest/notebook.ipynb    # TF-IDF + Random Forest
+├── 05_tfidf_xgboost/notebook.ipynb          # TF-IDF + XGBoost
+├── 06_neural_network/notebook.ipynb         # PyTorch LSTM
+├── 06b_pretrained_transformer/notebook.ipynb # Pretrained DistilBERT (HuggingFace)
+├── 07_comparison/notebook.ipynb             # Head-to-head model comparison
 ├── requirements.txt
 └── README.md
 ```
@@ -247,6 +267,7 @@ nlp_sentiment_analysis/
 | Data | pandas, numpy, pyarrow |
 | ML | scikit-learn, XGBoost |
 | Deep Learning | PyTorch |
+| Pretrained NLP | HuggingFace Transformers (DistilBERT) |
 | Hyperparameter Tuning | Optuna |
 | NLP | NLTK, TfidfVectorizer |
 | Interpretability | SHAP |
@@ -262,4 +283,3 @@ pip install -r requirements.txt
 ```
 
 Requires AWS credentials configured for S3 access and a Kaggle account for dataset download.
-
